@@ -33,7 +33,6 @@ class Execution:
 
 class Graph:
     def __init__(self):
-        self.phs = {}
         self.tensors = {}
         self.ops = {}
 
@@ -71,7 +70,7 @@ class InGraphObject:
 
     @staticmethod
     def check_other(other):
-        if not isinstance(other, Tensor):
+        if not isinstance(other, (Tensor, Operation, Constant)):
             if isinstance(other, float) or isinstance(other, int):
                 other = Constant(value=other)
             else:
@@ -95,7 +94,7 @@ class InGraphObject:
         return Divide(self, other)
 
     def __neg__(self):
-        return Mul(self, Constant(-1))
+        return Mul(self, Constant(value=-1))
 
     def __add__(self, other):
         other = self.check_other(other)
@@ -179,7 +178,9 @@ class Power(Operation):
     def backward(self, dout):
         a = self.a()
         b = self.b()
-        return dout*b*np.power(a, (b-1)), dout*np.log(a)*np.power(a, b)
+        l = dout*b*np.power(a, (b-1))
+        r = dout*np.log(a)*np.power(a, b)
+        return l, r
 
 
 class Divide(Operation):
