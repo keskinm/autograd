@@ -3,17 +3,28 @@ import uuid
 from lib.active_graph import active_graph
 
 class Execution:
-    def __init__(self):
+    def __init__(self, path):
+        self.path = path
+
+    def forward(self):
+        for obj in reversed(self.path):
+            if isinstance(obj, Operation):
+                obj.value = obj.forward()
+
+    def backward_ad(self):
+        vis = set()
+        self.path[0].grad = 1
+        for obj in self.path:
+            grad = obj.backward(obj.grad)
+            for inp in obj.inputs:
+                if not inp.obj_id in vis:
+                    inp.grad = grad
+                    vis.add(inp.obj_id)
+                else:
+                    inp.grad += grad
+
+    def forward_ad(self):
         pass
-
-    def forward(self, path):
-        for node in path:
-            pass
-
-    def backward(self, path):
-        for node in path:
-            pass
-
 
 class Graph:
     def __init__(self):
@@ -79,10 +90,19 @@ class Tensor(InGraphObject):
     def reset_grad(self):
         self.grad = 0
 
+    def __call__(self, *args, **kwargs):
+        return self.value
+
 class Operation(InGraphObject):
     def __init__(self, name=None):
         InGraphObject.__init__(self, name=name)
         active_graph[-1].ops[self.obj_id] = self
+
+    def forward(self):
+        raise NotImplementedError
+
+    def backward(self, dout):
+        raise NotImplementedError
 
     @property
     def inputs(self):
@@ -93,16 +113,20 @@ class Add(Operation):
         Operation.__init__(self, 'add')
         self.a = a
         self.b = b
+        self.value = None
 
     @property
     def inputs(self):
         return [self.a, self.b]
 
     def forward(self):
-        return self.a + self.b
+        return self.a() + self.b()
 
     def backward(self, dout):
         return self.b * dout, self.a * dout
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
 
 class Mul(Operation):
     def __init__(self, a, b):
@@ -115,8 +139,12 @@ class Mul(Operation):
         return [self.a, self.b]
 
     def forward(self):
-        return self.a @ self.b
+        res =  self.a() @ self.b()
+        return res
 
     def backward(self, dout):
         return dout @ self.b.T, self.a.T @ dout
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
 
