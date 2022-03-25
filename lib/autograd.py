@@ -259,3 +259,19 @@ class Dot(Operation):
         return np.dot(dout, b.T), np.dot(a.T, dout)
 
 
+class Sum(Operation):
+    def __init__(self, t):
+        Operation.__init__(self, 'Sum')
+        self.t = t
+
+    @property
+    def inputs(self):
+        return [self.t]
+
+    def forward(self):
+        return sum(self.t)
+
+    def backward(self, dout):
+        return dout * np.ones(self.t.shape)
+
+
