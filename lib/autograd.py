@@ -143,6 +143,9 @@ class Operation(InGraphObject):
     def inputs(self):
         raise NotImplementedError
 
+    def __call__(self, *args, **kwargs):
+        return self.value
+
 class Add(Operation):
     def __init__(self, a, b):
         Operation.__init__(self, 'add')
@@ -159,12 +162,10 @@ class Add(Operation):
     def backward(self, dout):
         return dout, dout
 
-    def __call__(self, *args, **kwargs):
-        return self.value
 
 class Power(Operation):
     def __init__(self, a, b):
-        Operation.__init__(self, 'add')
+        Operation.__init__(self, 'power')
         self.a = a
         self.b = b
 
@@ -180,12 +181,10 @@ class Power(Operation):
         b = self.b()
         return dout*b*np.power(a, (b-1)), dout*np.log(a)*np.power(a, b)
 
-    def __call__(self, *args, **kwargs):
-        return self.value
 
 class Divide(Operation):
     def __init__(self, a, b):
-        Operation.__init__(self, 'add')
+        Operation.__init__(self, 'divide')
         self.a = a
         self.b = b
 
@@ -201,9 +200,6 @@ class Divide(Operation):
         b = self.b()
 
         return dout/b, dout*a/np.power(b, 2)
-
-    def __call__(self, *args, **kwargs):
-        return self.value
 
 
 class Mul(Operation):
@@ -223,9 +219,6 @@ class Mul(Operation):
     def backward(self, dout):
         return dout * self.b(), dout * self.a()
 
-    def __call__(self, *args, **kwargs):
-        return self.value
-
 
 class MatMul(Operation):
     def __init__(self, a, b):
@@ -244,6 +237,24 @@ class MatMul(Operation):
     def backward(self, dout):
         return dout @ self.b().T, self.a().T @ dout
 
-    def __call__(self, *args, **kwargs):
-        return self.value
+
+class Dot(Operation):
+    def __init__(self, a, b):
+        Operation.__init__(self, 'dot')
+        self.a = a
+        self.b = b
+
+    @property
+    def inputs(self):
+        return [self.a, self.b]
+
+    def forward(self):
+        res =  np.dot(self.a(), self.b())
+        return res
+
+    def backward(self, dout):
+        a = self.a()
+        b = self.b()
+        return np.dot(dout, b.T), np.dot(a.T, dout)
+
 
