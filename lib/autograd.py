@@ -25,14 +25,14 @@ class InGraphObject:
         self.name = name
 
 class PlaceHolder(InGraphObject):
-    def __init__(self, name, value):
-        InGraphObject.__init__(self, name)
+    def __init__(self, value, name=None):
+        InGraphObject.__init__(self, name=name)
         active_graph[-1].phs[self.obj_id] = self
         self.value = value
 
 class Tensor(InGraphObject):
-    def __init__(self, name, value):
-        InGraphObject.__init__(self, name)
+    def __init__(self, value, name=None):
+        InGraphObject.__init__(self, name=name)
         active_graph[-1].tensors[self.obj_id] = self
         self.value = value
         self.grad = 0
@@ -40,9 +40,19 @@ class Tensor(InGraphObject):
     def reset_grad(self):
         self.grad = 0
 
+    def __mul__(self, other):
+        if not isinstance(other, Tensor):
+            raise TypeError(f'{other} must be a tensor')
+        return Mul(self, other)
+
+    def __add__(self, other):
+        if not isinstance(other, Tensor):
+            raise TypeError(f'{other} must be a tensor')
+        return Add(self, other)
+
 class Operation(InGraphObject):
-    def __init__(self, name):
-        InGraphObject.__init__(self, name)
+    def __init__(self, name=None):
+        InGraphObject.__init__(self, name=name)
         active_graph[-1].ops[self.obj_id] = self
 
 class Add(Operation):
