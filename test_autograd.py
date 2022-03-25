@@ -2,7 +2,7 @@ from lib.autograd import Graph, Tensor, Execution, Constant
 
 
 
-def example1():
+def test_example1():
   val1, val2, val3 = 0.9, 0.4, 1.3
   with Graph() as g:
     x = Tensor(val1, name='x')
