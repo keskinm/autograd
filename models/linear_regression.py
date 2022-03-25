@@ -20,11 +20,11 @@ class LinearRegression:
                 X = Tensor(self.X, name='X')
                 y = Tensor(self.y, name='y')
                 W = Tensor(self.W, name='W')
-                z = (Dot(X, W) + (-y**2))
+                z = Sum(Dot(X, W) + (-y**2))
                 path = g.compute_path(z.obj_id)
                 executor = Execution(path)
                 executor.forward()
-                print("z", sum(z()))
+                print("z", z())
                 executor.backward_ad()
                 self.W = self.W - 0.001*W.grad
 

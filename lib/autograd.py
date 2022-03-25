@@ -269,9 +269,11 @@ class Sum(Operation):
         return [self.t]
 
     def forward(self):
-        return sum(self.t)
+        a = self.t().shape
+        b = sum(self.t()).shape
+        return sum(self.t())
 
     def backward(self, dout):
-        return dout * np.ones(self.t.shape)
+        return dout * np.ones(self.t().shape)
 
 
