@@ -47,20 +47,27 @@ class Graph:
         for tensor in self.tensors.values():
             tensor.reset_grad()
 
-    def compute_path(self, operation_id):
+    def compute_path(self, operation_id, to_merge=None, to_merge_vis=None):
+        n = []
+        r = to_merge or []
+        vis = to_merge_vis or set()
+
         operation = self.ops[operation_id]
-        r = [operation]
-        vis = set(operation.obj_id)
+
+        if operation not in r:
+            n.append(operation)
+        if operation.obj_id not in vis:
+            vis.add(operation.obj_id)
 
         def rec_compute_path(op):
             for inp in op.inputs:
                 if not (inp.obj_id in vis):
-                    r.append(inp)
+                    n.append(inp)
                     vis.add(inp.obj_id)
                 if isinstance(inp, Operation): rec_compute_path(inp)
 
         rec_compute_path(operation)
-        return r
+        return n+r, vis
 
 
 class InGraphObject:
@@ -193,8 +200,8 @@ class Exp(Operation):
 
 
 class Log(Operation):
-    def __init__(self, a, base=10):
-        Operation.__init__(self, 'log')
+    def __init__(self, a, base=10, name='log'):
+        Operation.__init__(self, name=name)
         self.a = a
         self.base = base
         self.add_inputs([self.a])
@@ -256,10 +263,11 @@ class MatMul(Operation):
 
 
 class Dot(Operation):
-    def __init__(self, a, b):
+    def __init__(self, a, b, relax_left=None):
         Operation.__init__(self, 'dot')
         self.a = a
         self.b = b
+        self.relax_left = relax_left
         self.add_inputs([self.a, self.b])
 
     def forward(self):
@@ -269,8 +277,10 @@ class Dot(Operation):
     def backward(self, dout):
         a = self.a()
         b = self.b()
-        return np.dot(dout, b.T), np.dot(a.T, dout)
 
+        left = self.relax_left or np.dot(dout, b.T)
+
+        return left, np.dot(a.T, dout)
 
 class Sum(Operation):
     def __init__(self, t):
