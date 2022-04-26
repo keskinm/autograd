@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
 from sklearn import datasets
 
 from lib.autograd import Graph, Tensor, Constant, Dot, Execution, Sum
@@ -13,7 +12,7 @@ class LinearRegression:
         self.X, self.y = datasets.make_regression(n_samples=10, n_features=10)
         self.W = np.random.normal(0, size=self.X.shape[1])
 
-    def make_graph(self):
+    def train_sample(self):
         self.make_dataset()
         for _ in range(200):
             with Graph() as g:
@@ -28,4 +27,4 @@ class LinearRegression:
                 executor.backward_ad()
                 self.W = self.W - 0.001*W.grad
 
-LinearRegression().make_graph()
+LinearRegression().train_sample()

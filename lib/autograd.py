@@ -1,3 +1,4 @@
+import math
 import uuid
 import numpy as np
 
@@ -131,6 +132,7 @@ class Operation(InGraphObject):
         active_graph[-1].ops[self.obj_id] = self
         self.value = None
         self.grad = 0
+        self.inputs = []
 
     def forward(self):
         raise NotImplementedError
@@ -138,9 +140,9 @@ class Operation(InGraphObject):
     def backward(self, dout):
         raise NotImplementedError
 
-    @property
-    def inputs(self):
-        raise NotImplementedError
+    def add_inputs(self, inputs):
+        for inp in inputs:
+            self.inputs.append(inp)
 
     def __call__(self, *args, **kwargs):
         return self.value
@@ -150,10 +152,7 @@ class Add(Operation):
         Operation.__init__(self, 'add')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         return self.a() + self.b()
@@ -167,10 +166,7 @@ class Power(Operation):
         Operation.__init__(self, 'power')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         return np.power(self.a(), self.b())
@@ -183,15 +179,39 @@ class Power(Operation):
         return l, r
 
 
+class Exp(Operation):
+    def __init__(self, a):
+        Operation.__init__(self, 'exp')
+        self.a = a
+        self.add_inputs([self.a])
+
+    def forward(self):
+        return math.exp(self.a())
+
+    def backward(self, dout):
+        return dout * self.forward()
+
+
+class Log(Operation):
+    def __init__(self, a, base=10):
+        Operation.__init__(self, 'log')
+        self.a = a
+        self.base = base
+        self.add_inputs([self.a])
+
+    def forward(self):
+        return math.log(self.a(), self.base)
+
+    def backward(self, dout):
+        return dout / self.a()
+
+
 class Divide(Operation):
     def __init__(self, a, b):
         Operation.__init__(self, 'divide')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         return self.a() / self.b()
@@ -208,10 +228,7 @@ class Mul(Operation):
         Operation.__init__(self, 'mul')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         res =  self.a() * self.b()
@@ -226,10 +243,7 @@ class MatMul(Operation):
         Operation.__init__(self, 'matmul')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         res =  self.a() @ self.b()
@@ -244,10 +258,7 @@ class Dot(Operation):
         Operation.__init__(self, 'dot')
         self.a = a
         self.b = b
-
-    @property
-    def inputs(self):
-        return [self.a, self.b]
+        self.add_inputs([self.a, self.b])
 
     def forward(self):
         res =  np.dot(self.a(), self.b())
@@ -263,14 +274,9 @@ class Sum(Operation):
     def __init__(self, t):
         Operation.__init__(self, 'Sum')
         self.t = t
-
-    @property
-    def inputs(self):
-        return [self.t]
+        self.add_inputs([self.t])
 
     def forward(self):
-        a = self.t().shape
-        b = sum(self.t()).shape
         return sum(self.t())
 
     def backward(self, dout):
