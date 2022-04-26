@@ -1,4 +1,3 @@
-import math
 import uuid
 import numpy as np
 
@@ -120,10 +119,10 @@ class Constant(Tensor):
 
     @property
     def value(self):
-        return self.value
+        return self._value
 
     @value.setter
-    def value(self, value):
+    def value(self, new_value):
         raise ValueError("Cannot reassign constant")
 
 class Operation(InGraphObject):
@@ -186,10 +185,11 @@ class Exp(Operation):
         self.add_inputs([self.a])
 
     def forward(self):
-        return math.exp(self.a())
+        a = self.a()
+        return np.exp(a)
 
     def backward(self, dout):
-        return dout * self.forward()
+        return [dout * self.forward()]
 
 
 class Log(Operation):
@@ -200,10 +200,10 @@ class Log(Operation):
         self.add_inputs([self.a])
 
     def forward(self):
-        return math.log(self.a(), self.base)
+        return getattr(np, f'log{self.base}')(self.a())
 
     def backward(self, dout):
-        return dout / self.a()
+        return [dout / self.a()]
 
 
 class Divide(Operation):
@@ -231,7 +231,9 @@ class Mul(Operation):
         self.add_inputs([self.a, self.b])
 
     def forward(self):
-        res =  self.a() * self.b()
+        a = self.a()
+        b = self.b()
+        res =  a * b
         return res
 
     def backward(self, dout):

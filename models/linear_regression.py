@@ -26,5 +26,3 @@ class LinearRegression:
                 print("z", z())
                 executor.backward_ad()
                 self.W = self.W - 0.001*W.grad
-
-LinearRegression().train_sample()
