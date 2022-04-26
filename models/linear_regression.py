@@ -1,15 +1,13 @@
 import numpy as np
 from sklearn import datasets
 
-from lib.autograd import Graph, Tensor, Constant, Dot, Execution, Sum
+from lib.autograd import Graph, Constant, Dot, Execution, Sum
+from models.models import Model
 
 
-class LinearRegression:
+class LinearRegression(Model):
     def __init__(self):
-        self.X = None
-        self.y = None
-        self.W = None
-        self.loss = None
+        super().__init__()
 
         self.make_dataset()
         self.init_weights(weights=None)
@@ -28,12 +26,6 @@ class LinearRegression:
                 print(f"Loss: {self.loss}")
                 executor.backward_ad()
                 self.W = self.W - 0.001*W.grad
-
-    def init_tensors(self):
-        X = Tensor(self.X, name='X')
-        y = Tensor(self.y, name='y')
-        W = Tensor(self.W, name='W')
-        return W, X, y
 
     def forward(self, W, X, g, y):
         z = Sum((Dot(X, W, relax_left=True) + (-y)) ** Constant(2))

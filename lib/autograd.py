@@ -8,11 +8,13 @@ class Execution:
         self.path = path
 
     def forward(self):
+        """A forward pass of the path."""
         for obj in reversed(self.path):
             if isinstance(obj, Operation):
                 obj.value = obj.forward()
 
     def backward_ad(self):
+        """Backward automatic differentiation implementation."""
         vis = set()
         self.path[0].grad = 1
         for obj in self.path:
@@ -29,7 +31,7 @@ class Execution:
                     inp.grad += grad
 
     def forward_ad(self):
-        pass
+        """Forward automatic differentiation implementation."""
 
 class Graph:
     def __init__(self):
