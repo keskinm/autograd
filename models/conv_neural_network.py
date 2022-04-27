@@ -4,7 +4,8 @@ import numpy as np
 from sklearn import datasets, svm, metrics
 from sklearn.model_selection import train_test_split
 
-from lib.autograd import Graph, Constant, Dot, Execution, Sum, Conv2D
+from lib.autograd import Graph, Constant, Execution
+from lib.operation import Dot, Sum, Conv2D
 from models import Model
 
 

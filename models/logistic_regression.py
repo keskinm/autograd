@@ -1,7 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from lib.autograd import Graph, Constant, Dot, Execution, Divide, Exp, Log, Sum
+from lib.autograd import Graph, Constant, Execution
+from lib.operation import Exp, Log, Divide, Dot, Sum
 from models.models import Model
 
 
@@ -18,12 +19,11 @@ class LogisticRegression(Model):
             plt.scatter(self.X[:, 0], self.X[:, 1], c=self.y)
             plt.savefig('plot_dataset.png')
 
-    def train_sample(self, forward_style='merge_forward_pass'):
+    def train_sample(self, forward_style='merge_forward_pass', epochs=200):
         self.make_dataset()
-        for _ in range(200):
+        for epoch in range(epochs):
             with Graph() as g:
                 W, X, y = self.init_tensors()
-
                 executor, loss = getattr(self, forward_style)(W, X, g, y)
                 self.loss = loss
                 print(f"Loss: {self.loss}")

@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn import datasets
 
-from lib.autograd import Graph, Constant, Dot, Execution, Sum
+from lib.autograd import Graph, Constant, Execution
+from lib.operation import Dot, Sum
 from models.models import Model
 
 
@@ -18,8 +19,8 @@ class LinearRegression(Model):
     def make_dataset(self):
         self.X, self.y = datasets.make_regression(n_samples=10, n_features=2)
 
-    def train_sample(self):
-        for _ in range(200):
+    def train_sample(self, epochs=200):
+        for epoch in range(epochs):
             with Graph() as g:
                 W, X, y = self.init_tensors()
                 executor = self.forward(W, X, g, y)
@@ -34,3 +35,4 @@ class LinearRegression(Model):
         executor.forward()
         self.loss = z()
         return executor
+

@@ -1,4 +1,5 @@
-from lib.autograd import Graph, Tensor, Execution, Constant, Conv2D
+from lib.autograd import Graph, Tensor, Execution, Constant
+from lib.operation import Conv2D
 
 
 def test_example1():
