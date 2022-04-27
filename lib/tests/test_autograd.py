@@ -26,7 +26,9 @@ def test_conv2D():
     import numpy as np
     import tensorflow as tf
 
-    X = np.random.normal(0, size=[2, 2, 10])
+    tf.keras.backend.set_image_data_format('channels_last')
+
+    X = np.random.normal(0, size=[6, 6, 10])
 
     X_tf_input = X.transpose([2, 0, 1])
     X_tf_input = np.expand_dims(X_tf_input, axis=-1)
@@ -36,7 +38,7 @@ def test_conv2D():
 
     tf_conv2D = tf.keras.layers.Conv2D(
         filters=1,
-        kernel_size=3,
+        kernel_size=2,
         strides=(1, 1),
         padding=('valid'),
         data_format='channels_last',
@@ -44,8 +46,14 @@ def test_conv2D():
         dilation_rate=2,
         input_shape=X_tf_input.shape[1:]
     )
-    weights = tf_conv2D.get_weights()
+
     tf_forwarded = tf_conv2D(X_tf_input)
+    weights = tf_conv2D.get_weights()
+
+    weights, unknown = weights
+    weights = weights[:, :, 0, 0]
+    print("weights", weights)
+    print("forwarded", tf.keras.backend.get_value(tf_forwarded).shape)
 
     with Graph() as g:
         z = Conv2D(X, weights)
