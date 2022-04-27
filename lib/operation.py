@@ -272,7 +272,7 @@ class Conv2D(Operation):
                     for sample_idx in range(n_samples):
                         for left_corner in range(x_dim_0 - w_dim_0 + 1):
                             for top_corner in range(x_dim_1 - w_dim_1 + 1):
-                               contrib +=  self.value[sample_idx, x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
+                               contrib +=  dout[sample_idx, x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
 
                     line_derivatives.append(contrib)
 
