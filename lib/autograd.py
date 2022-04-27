@@ -332,3 +332,17 @@ class Conv2D(Operation):
 
     def backward(self, dout):
         return
+
+class Transpose(Operation):
+    def __init__(self, arr, transposition):
+        Operation.__init__(self, name='transpose')
+        self.arr = arr
+        self.transposition = transposition
+        self.add_inputs([self.arr])
+
+    def forward(self):
+        return np.transpose(self.arr(), self.transposition)
+
+    def backward(self, dout):
+        # return np.transpose(dout, self.transposition)
+        return
