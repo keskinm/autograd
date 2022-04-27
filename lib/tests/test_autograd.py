@@ -29,10 +29,9 @@ def test_conv2D():
 
     tf.keras.backend.set_image_data_format('channels_last')
 
-    X = np.random.normal(0, size=[6, 6, 10])
+    X = np.random.normal(0, size=[10, 6, 6])
 
-    X_tf_input = X.transpose([2, 0, 1])
-    X_tf_input = np.expand_dims(X_tf_input, axis=-1)
+    X_tf_input = np.expand_dims(X, axis=-1)
 
     tf_conv2D = tf.keras.layers.Conv2D(
         filters=1,

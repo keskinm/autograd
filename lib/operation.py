@@ -224,10 +224,10 @@ class Conv2D(Operation):
 
     def forward(self):
         """
-        self.w of shape (height, witdh) convolves self.X of shape (height, width, n_samples)
+        self.w of shape (height, witdh) convolves self.X of shape (n_samples, height, width)
         :return: (n_samples, height, width) convolution
         """
-        x_dim_0, x_dim_1, n_samples = self.x().shape
+        n_samples, x_dim_0, x_dim_1 = self.x().shape
         w_dim_0, w_dim_1 = self.w().shape
 
         samples_convolved = []
@@ -242,7 +242,7 @@ class Conv2D(Operation):
 
                     for x in range(w_dim_0):
                         for y in range(w_dim_1):
-                            mult += self.w()[x, y] * self.x()[left_corner+x, top_corner+y, sample_idx]
+                            mult += self.w()[x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
 
                     convolved_to_reshape.append(mult)
 
@@ -259,28 +259,27 @@ class Conv2D(Operation):
             raise NotImplementedError
 
         if self.w.id in self.compute_grads:
-            x_dim_0, x_dim_1, n_samples = self.x().shape
+            n_samples, x_dim_0, x_dim_1 = self.x().shape
             w_dim_0, w_dim_1 = self.w().shape
 
             w_grad = []
 
             for x in range(w_dim_0):
-                tmp_1 = []
+                line_derivatives = []
                 for y in range(w_dim_1):
                     contrib = 0
 
                     for sample_idx in range(n_samples):
                         for left_corner in range(x_dim_0 - w_dim_0 + 1):
                             for top_corner in range(x_dim_1 - w_dim_1 + 1):
-                               contrib +=  self.value[sample_idx, x, y] * self.x()[left_corner+x, top_corner+y, sample_idx]
+                               contrib +=  self.value[sample_idx, x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
 
-                    tmp_1.append(contrib)
+                    line_derivatives.append(contrib)
 
-                w_grad.append(tmp_1)
+                w_grad.append(line_derivatives)
 
-            grads.append(w_grad)
+            grads.append(np.array(w_grad))
 
-        print(dout.shape)
         return grads
 
 

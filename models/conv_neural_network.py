@@ -22,8 +22,8 @@ class ConvNeuralNetwork(Model):
             X.append(s)
             y.append([_x, _y])
 
-        self.X, self.y = np.array(X).transpose([1, 2, 0]), y
-        self.W = np.random.normal(0, size=[self.X.shape[0]//3, self.X.shape[1]//3])
+        self.X, self.y = np.array(X), y
+        self.W = np.random.normal(0, size=[self.X.shape[1]//3, self.X.shape[2]//3])
 
     def make_dataset_for_classification(self):
         digits = datasets.load_digits()
