@@ -22,7 +22,7 @@ def test_example1():
 
 
 def test_conv2D():
-    """Tests Conv2D outputs same results as torch Conv2D."""
+    """Tests Conv2D outputs same results as keras Conv2D."""
     import numpy as np
     import tensorflow as tf
 
