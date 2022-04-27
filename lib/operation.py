@@ -223,6 +223,10 @@ class Conv2D(Operation):
         self.add_inputs([self.x, self.w])
 
     def forward(self):
+        """
+        self.w of shape (height, witdh) convolves self.X of shape (height, width, n_samples)
+        :return: (n_samples, height, width) convolution
+        """
         x_dim_0, x_dim_1, n_samples = self.x().shape
         w_dim_0, w_dim_1 = self.w().shape
 
@@ -246,7 +250,7 @@ class Conv2D(Operation):
 
             samples_convolved.append(convolved)
 
-        return samples_convolved
+        return np.stack(samples_convolved)
 
     def backward(self, dout):
         grads = []
@@ -254,8 +258,25 @@ class Conv2D(Operation):
         if self.x.id in self.compute_grads:
             raise NotImplementedError
 
-        if self.w in self.compute_grads:
-            w_grad = None
+        if self.w.id in self.compute_grads:
+            x_dim_0, x_dim_1, n_samples = self.x().shape
+            w_dim_0, w_dim_1 = self.w().shape
+
+            w_grad = []
+
+            for x in range(w_dim_0):
+                tmp_1 = []
+                for y in range(w_dim_1):
+                    contrib = 0
+
+                    for sample_idx in range(n_samples):
+                        for left_corner in range(x_dim_0 - w_dim_0 + 1):
+                            for top_corner in range(x_dim_1 - w_dim_1 + 1):
+                               contrib +=  self.value[sample_idx, x, y] * self.x()[left_corner+x, top_corner+y, sample_idx]
+
+                    tmp_1.append(contrib)
+
+                w_grad.append(tmp_1)
 
             grads.append(w_grad)
 
