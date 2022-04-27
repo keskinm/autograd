@@ -149,6 +149,9 @@ class Operation(InGraphObject):
         raise NotImplementedError
 
     def add_inputs(self, inputs: list):
+        if not isinstance(inputs, list):
+            raise TypeError
+
         for inp in inputs:
             self.inputs.append(inp)
 
