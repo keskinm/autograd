@@ -148,7 +148,7 @@ class Operation(InGraphObject):
     def backward(self, dout):
         raise NotImplementedError
 
-    def add_inputs(self, inputs):
+    def add_inputs(self, inputs: list):
         for inp in inputs:
             self.inputs.append(inp)
 

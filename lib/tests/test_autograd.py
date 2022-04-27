@@ -33,9 +33,6 @@ def test_conv2D():
     X_tf_input = X.transpose([2, 0, 1])
     X_tf_input = np.expand_dims(X_tf_input, axis=-1)
 
-    print("X_tf_input shape", X_tf_input.shape)
-    print("given shape", X_tf_input.shape[1:])
-
     tf_conv2D = tf.keras.layers.Conv2D(
         filters=1,
         kernel_size=2,
@@ -43,17 +40,14 @@ def test_conv2D():
         padding=('valid'),
         data_format='channels_last',
         activation=None,
-        dilation_rate=2,
+        dilation_rate=(1, 1),
         input_shape=X_tf_input.shape[1:]
     )
 
     tf_forwarded = tf_conv2D(X_tf_input)
     weights = tf_conv2D.get_weights()
 
-    weights, unknown = weights
-    weights = weights[:, :, 0, 0]
-    print("weights", weights)
-    print("forwarded", tf.keras.backend.get_value(tf_forwarded).shape)
+    weights = weights[0][:, :, 0, 0]
 
     with Graph() as g:
         z = Conv2D(Tensor(X), Tensor(weights))
@@ -61,7 +55,7 @@ def test_conv2D():
         executor = Execution(path)
         executor.forward()
 
-    assert z() == tf_forwarded
+    from_autograd = np.stack(z())
+    from_tf = tf.keras.backend.get_value(tf_forwarded)[..., 0]
 
-
-test_conv2D()
+    assert np.isclose(from_autograd, from_tf, atol=1e-15).all()
