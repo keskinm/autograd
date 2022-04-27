@@ -294,7 +294,7 @@ class Transpose(Operation):
         return np.transpose(self.t(), self.transposition)
 
     def backward(self, dout):
-        return np.transpose(dout, self.transposition)
+        return [np.transpose(dout, self.transposition)]
 
 
 class Flatten(Operation):
@@ -310,4 +310,21 @@ class Flatten(Operation):
         return self.t().flatten()
 
     def backward(self, dout):
-        return dout.reshape(self.saved_shape)
+        return [dout.reshape(self.saved_shape)]
+
+
+class Reshape(Operation):
+    def __init__(self, tensor, shape, name='flatten'):
+        Operation.__init__(self, name=name)
+        self.t = tensor
+        self.shape = shape
+        self.saved_shape = None
+        self.add_inputs([self.t])
+
+    def forward(self):
+        arr = self.t()
+        self.saved_shape = arr.shape
+        return arr.reshape(self.shape)
+
+    def backward(self, dout):
+        return [dout.reshape(self.saved_shape)]
