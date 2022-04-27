@@ -9,7 +9,7 @@ def test_example1():
         c = Constant(val3, name='c')
 
         z = (x*y+c)*c + x
-        path = g.compute_path(z.obj_id)
+        path, vis = g.compute_path(z.obj_id)
         executor = Execution(path)
         executor.forward()
         assert z.value == (val1*val2+val3)*val3+val1
