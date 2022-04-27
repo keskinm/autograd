@@ -31,8 +31,8 @@ class LogisticRegression(Model):
                 self.W += 0.001 * W.grad
 
     def forward_pass(self, W, X, g, y):
-        z1 = Divide(Constant(1), Exp(-Dot(X, W, relax_left=True) + Constant(1)))
-        z2 = Divide(Constant(1), Exp(-Dot(X, W, relax_left=True) + Constant(1)))
+        z1 = Divide(Constant(1), Exp(-Dot(X, W, compute_grad=[W.id]) + Constant(1)))
+        z2 = Divide(Constant(1), Exp(-Dot(X, W, compute_grad=[W.id]) + Constant(1)))
         first_logged = Log(z1)
         loss_left = y * first_logged
         neg_loss_left = -loss_left
@@ -46,7 +46,7 @@ class LogisticRegression(Model):
         return executor, loss()
 
     def merge_forward_pass(self, W, X, g, y):
-        dotted = Dot(X, W, relax_left=True)
+        dotted = Dot(X, W, compute_grad=[W.id])
         dotted.name = 'dotted'
         neg_dotted = -dotted
         neg_dotted.name = 'neg dotted'

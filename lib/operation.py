@@ -5,12 +5,31 @@ from lib.autograd import InGraphObject
 
 
 class Operation(InGraphObject):
-    def __init__(self, name=None):
+    def __init__(self, name=None, compute_grads=None):
         InGraphObject.__init__(self, name=name)
         active_graph[-1].ops[self.obj_id] = self
         self.value = None
         self.grad = 0
+        if compute_grads is not None:
+            if not isinstance(compute_grads, list):
+                raise TypeError
+        self.compute_grads = compute_grads
         self.inputs = []
+
+    def find_input(self, find_id):
+        for inp in self.inputs:
+            if inp.id == find_id:
+                return inp
+        raise ValueError
+
+    def get_to_compute_grads(self):
+        if self.compute_grads is None:
+            return self.inputs
+        else:
+            to_compute_grads = []
+            for obj_id in self.compute_grads:
+                to_compute_grads.append(self.find_input(obj_id))
+        return to_compute_grads
 
     def compute_value(self):
         self.value = self.forward()
@@ -33,8 +52,8 @@ class Operation(InGraphObject):
 
 
 class Add(Operation):
-    def __init__(self, a, b):
-        Operation.__init__(self, 'add')
+    def __init__(self, a, b, name='add'):
+        Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
         self.add_inputs([self.a, self.b])
@@ -47,8 +66,8 @@ class Add(Operation):
 
 
 class Power(Operation):
-    def __init__(self, a, b):
-        Operation.__init__(self, 'power')
+    def __init__(self, a, b, name='power'):
+        Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
         self.add_inputs([self.a, self.b])
@@ -65,8 +84,8 @@ class Power(Operation):
 
 
 class Exp(Operation):
-    def __init__(self, a):
-        Operation.__init__(self, 'exp')
+    def __init__(self, a, name='exp'):
+        Operation.__init__(self, compute_grads=[a.id], name=name)
         self.a = a
         self.add_inputs([self.a])
 
@@ -80,7 +99,7 @@ class Exp(Operation):
 
 class Log(Operation):
     def __init__(self, a, base=10, name='log'):
-        Operation.__init__(self, name=name)
+        Operation.__init__(self, compute_grads=[a.id], name=name)
         self.a = a
         self.base = base
         self.add_inputs([self.a])
@@ -93,8 +112,8 @@ class Log(Operation):
 
 
 class Divide(Operation):
-    def __init__(self, a, b):
-        Operation.__init__(self, 'divide')
+    def __init__(self, a, b, name='divide'):
+        Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
         self.add_inputs([self.a, self.b])
@@ -110,8 +129,8 @@ class Divide(Operation):
 
 
 class Mul(Operation):
-    def __init__(self, a, b):
-        Operation.__init__(self, 'mul')
+    def __init__(self, a, b, name='mul'):
+        Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
         self.add_inputs([self.a, self.b])
@@ -127,8 +146,9 @@ class Mul(Operation):
 
 
 class MatMul(Operation):
-    def __init__(self, a, b):
-        Operation.__init__(self, 'matmul')
+    def __init__(self, a, b, compute_grad=None, name='matmul'):
+        compute_grad = compute_grad or [a.id, b.id]
+        Operation.__init__(self, compute_grads=compute_grad, name=name)
         self.a = a
         self.b = b
         self.add_inputs([self.a, self.b])
@@ -138,33 +158,47 @@ class MatMul(Operation):
         return res
 
     def backward(self, dout):
-        return dout @ self.b().T, self.a().T @ dout
+        grads = []
+        if self.a.id in self.compute_grads:
+            a_grad = dout @ self.b().T
+            grads.append(a_grad)
+
+        if self.b.id in self.compute_grads:
+            b_grad = self.a().T @ dout
+            grads.append(b_grad)
+
+        return grads
 
 
 class Dot(Operation):
-    def __init__(self, a, b, relax_left=None):
-        Operation.__init__(self, 'dot')
-        self.a = a
-        self.b = b
-        self.relax_left = relax_left
-        self.add_inputs([self.a, self.b])
+    def __init__(self, x, w, compute_grad=None, name='Dot'):
+        compute_grad = compute_grad or [x.id, w.id]
+        Operation.__init__(self, compute_grads=compute_grad, name=name)
+        self.X = x
+        self.W = w
+        self.add_inputs([self.X, self.W])
 
     def forward(self):
-        res =  np.dot(self.a(), self.b())
+        res =  np.dot(self.X(), self.W())
         return res
 
     def backward(self, dout):
-        a = self.a()
-        b = self.b()
+        grads = []
 
-        left = self.relax_left or np.dot(dout, b.T)
+        if self.X.id in self.compute_grads:
+            x_grad = np.dot(dout, self.W().T)
+            grads.append(x_grad)
 
-        return left, np.dot(a.T, dout)
+        if self.W.id in self.compute_grads:
+            w_grad = np.dot(self.X().T, dout)
+            grads.append(w_grad)
+
+        return grads
 
 
 class Sum(Operation):
-    def __init__(self, t):
-        Operation.__init__(self, 'Sum')
+    def __init__(self, t, name='Sum'):
+        Operation.__init__(self, compute_grads=[t.id], name=name)
         self.t = t
         self.add_inputs([self.t])
 
@@ -176,8 +210,9 @@ class Sum(Operation):
 
 
 class Conv2D(Operation):
-    def __init__(self, x, w, name='conv2D'):
-        Operation.__init__(self, name=name)
+    def __init__(self, x, w, compute_grad=None, name='conv2D'):
+        compute_grad = compute_grad or [x.id, w.id]
+        Operation.__init__(self, compute_grads=compute_grad, name=name)
         self.x = x
         self.w = w
         self.add_inputs([self.x, self.w])
@@ -209,10 +244,18 @@ class Conv2D(Operation):
         return samples_convolved
 
     def backward(self, dout):
-        left = None
+        grads = []
+
+        if self.x.id in self.compute_grads:
+            raise NotImplementedError
+
+        if self.w in self.compute_grads:
+            w_grad = None
+
+            grads.append(w_grad)
 
         print(dout.shape)
-        return
+        return grads
 
 
 class Transpose(Operation):

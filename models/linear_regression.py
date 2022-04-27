@@ -29,7 +29,7 @@ class LinearRegression(Model):
                 self.W = self.W - 0.001*W.grad
 
     def forward(self, W, X, g, y):
-        z = Sum((Dot(X, W, relax_left=True) + (-y)) ** Constant(2))
+        z = Sum((Dot(X, W, compute_grad=[W.id]) + (-y)) ** Constant(2))
         path, vis = g.compute_path(z.obj_id)
         executor = Execution(path)
         executor.forward()

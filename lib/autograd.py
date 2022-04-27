@@ -24,7 +24,7 @@ class Execution:
             if isinstance(obj, Tensor):
                 continue
             grads = obj.backward(obj.grad)
-            for inp, grad in zip(obj.inputs, grads):
+            for inp, grad in zip(obj.get_to_compute_grads(), grads):
                 if isinstance(obj, Constant):
                     continue
                 if not inp.obj_id in vis:
@@ -80,6 +80,10 @@ class InGraphObject:
     def __init__(self, name, obj_id=None):
         self.obj_id = obj_id or str(uuid.uuid4())
         self.name = name
+
+    @property
+    def id(self):
+        return self.obj_id
 
     def compute_value(self):
         pass
