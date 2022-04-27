@@ -1,5 +1,4 @@
 import uuid
-import numpy as np
 
 from lib.active_graph import active_graph
 
@@ -87,7 +86,7 @@ class InGraphObject:
 
     @staticmethod
     def check_other(other):
-        if not isinstance(other, (InGraphObject)):
+        if not isinstance(other, InGraphObject):
             if isinstance(other, float) or isinstance(other, int):
                 other = Constant(value=other)
             else:

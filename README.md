@@ -19,6 +19,8 @@ Tensorflow. Some example of gradient descent are provided within regular machine
 Here a snippet of usage: 
 
 ````python
+from lib.autograd import Graph, Tensor, Execution, Constant
+from lib.operation import Sum, Dot
 def train_sample(self):
     for _ in range(200):
         with Graph() as g:
@@ -26,7 +28,7 @@ def train_sample(self):
             y = Tensor(self.y, name='y')
             W = Tensor(self.W, name='W')
     
-            z = Sum((Dot(X, W, relax_left=True) + (-y)) ** Constant(2))
+            z = Sum((Dot(X, W) + (-y)) ** Constant(2))
             path, vis = g.compute_path(z.obj_id)
             executor = Execution(path)
             executor.forward()
