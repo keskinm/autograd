@@ -297,3 +297,38 @@ class Sum(Operation):
         return dout * np.ones(self.t().shape)
 
 
+class Conv2D(Operation):
+    def __init__(self, x, w, name='conv2D'):
+        Operation.__init__(self, name=name)
+        self.x = x
+        self.w = w
+        self.add_inputs([self.x, self.w])
+
+    def forward(self):
+        x_dim_0, x_dim_1, n_samples = self.x().shape
+        w_dim_0, w_dim_1 = self.w().shape
+
+        samples_convolved = []
+
+        for sample_idx in range(n_samples):
+
+            convolved_to_reshape = []
+
+            for left_corner in range(x_dim_0-w_dim_0+1):
+                for top_corner in range(x_dim_1-w_dim_1+1):
+                    mult = 0
+
+                    for x in range(w_dim_0):
+                        for y in range(w_dim_1):
+                            mult += self.w()[x, y] * self.x()[left_corner+x, top_corner+y, sample_idx]
+
+                    convolved_to_reshape.append(mult)
+
+            convolved = np.array(convolved_to_reshape).reshape(x_dim_0-w_dim_0+1, x_dim_1-w_dim_1+1)
+
+            samples_convolved.append(convolved)
+
+        return samples_convolved
+
+    def backward(self, dout):
+        return

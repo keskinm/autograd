@@ -8,7 +8,6 @@ class Model:
         self.X = None
         self.y = None
         self.W = None
-
         self.loss = None
 
     def init_weights(self, weights=None):
