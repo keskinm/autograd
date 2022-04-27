@@ -1,5 +1,7 @@
 import uuid
 
+
+from lib.abilities import WithGrad
 from lib.active_graph import active_graph
 
 import sys
@@ -19,10 +21,15 @@ class Execution:
     def backward_ad(self):
         """Backward automatic differentiation implementation."""
         vis = set()
-        self.path[0].grad = 1
+        self.path[0].init_grad('ones_like')
+        for obj in self.path[1:]:
+            if isinstance(obj, WithGrad):
+                obj.init_grad('zeros_like')
+
         for obj in self.path:
             if isinstance(obj, Tensor):
                 continue
+
             grads = obj.backward(obj.grad)
             for inp, grad in zip(obj.get_to_compute_grads(), grads):
                 if isinstance(obj, Constant):
@@ -126,15 +133,12 @@ class InGraphObject:
         other = self.check_other(other)
         return Add(self, other)
 
-class Tensor(InGraphObject):
+class Tensor(InGraphObject, WithGrad):
     def __init__(self, value, name=None):
+        WithGrad.__init__(self)
         InGraphObject.__init__(self, name=name)
         active_graph[-1].tensors[self.obj_id] = self
         self._value = value
-        self.grad = 0
-
-    def reset_grad(self):
-        self.grad = 0
 
     def __call__(self, *args, **kwargs):
         return self._value

@@ -5,7 +5,7 @@ from sklearn import datasets, svm, metrics
 from sklearn.model_selection import train_test_split
 
 from lib.autograd import Graph, Constant, Execution
-from lib.operation import Dot, Sum, Conv2D
+from lib.operation import Dot, Sum, Conv2D, Exp
 from models import Model
 
 
@@ -35,10 +35,12 @@ class ConvNeuralNetwork(Model):
             with Graph() as g:
                 W, X, y = self.init_tensors()
 
-                z = Conv2D(X, W)
+                z = Conv2D(X, W, compute_grad=[W.id])
                 path, vis = g.compute_path(z.obj_id)
                 executor = Execution(path)
                 executor.forward()
                 print("z", z())
+                executor.backward_ad()
+
 
 ConvNeuralNetwork().draft()

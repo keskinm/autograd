@@ -1,20 +1,25 @@
 import numpy as np
 
+from lib.abilities import WithGrad
 from lib.active_graph import active_graph
 from lib.autograd import InGraphObject
 
 
-class Operation(InGraphObject):
+class Operation(InGraphObject, WithGrad):
     def __init__(self, name=None, compute_grads=None):
         InGraphObject.__init__(self, name=name)
         active_graph[-1].ops[self.obj_id] = self
-        self.value = None
-        self.grad = 0
+        self._value = None
+        self.grad = None
         if compute_grads is not None:
             if not isinstance(compute_grads, list):
                 raise TypeError
         self.compute_grads = compute_grads
         self.inputs = []
+
+    @property
+    def value(self):
+        return self._value
 
     def find_input(self, find_id):
         for inp in self.inputs:
@@ -32,7 +37,7 @@ class Operation(InGraphObject):
         return to_compute_grads
 
     def compute_value(self):
-        self.value = self.forward()
+        self._value = self.forward()
 
     def forward(self):
         raise NotImplementedError
@@ -48,7 +53,7 @@ class Operation(InGraphObject):
             self.inputs.append(inp)
 
     def __call__(self, *args, **kwargs):
-        return self.value
+        return self._value
 
 
 class Add(Operation):
