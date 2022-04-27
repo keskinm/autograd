@@ -3,10 +3,10 @@ from sklearn import datasets
 
 from lib.autograd import Graph, Constant, Execution
 from lib.operation import Dot, Sum
-from models.models import Model
+from models import SimpleModel
 
 
-class LinearRegression(Model):
+class LinearRegression(SimpleModel):
     def __init__(self):
         super().__init__()
 
@@ -35,4 +35,3 @@ class LinearRegression(Model):
         executor.forward()
         self.loss = z()
         return executor
-

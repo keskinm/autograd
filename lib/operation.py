@@ -284,15 +284,30 @@ class Conv2D(Operation):
 
 
 class Transpose(Operation):
-    def __init__(self, arr, transposition):
+    def __init__(self, tensor, transposition):
         Operation.__init__(self, name='transpose')
-        self.arr = arr
+        self.t = tensor
         self.transposition = transposition
-        self.add_inputs([self.arr])
+        self.add_inputs([self.t])
 
     def forward(self):
-        return np.transpose(self.arr(), self.transposition)
+        return np.transpose(self.t(), self.transposition)
 
     def backward(self, dout):
-        # return np.transpose(dout, self.transposition)
-        return
+        return np.transpose(dout, self.transposition)
+
+
+class Flatten(Operation):
+    def __init__(self, tensor, name='flatten'):
+        Operation.__init__(self, name=name)
+        self.t = tensor
+        self.add_inputs([self.t])
+        self.saved_shape = None
+
+    def forward(self):
+        arr = self.t()
+        self.saved_shape = arr.shape
+        return self.t().flatten()
+
+    def backward(self, dout):
+        return dout.reshape(self.saved_shape)

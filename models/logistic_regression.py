@@ -3,10 +3,10 @@ from matplotlib import pyplot as plt
 
 from lib.autograd import Graph, Constant, Execution
 from lib.operation import Exp, Log, Divide, Dot, Sum
-from models.models import Model
+from models.models import SimpleModel
 
 
-class LogisticRegression(Model):
+class LogisticRegression(SimpleModel):
     def __init__(self):
         super().__init__()
         self.make_dataset()

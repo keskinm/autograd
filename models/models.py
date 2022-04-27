@@ -3,7 +3,7 @@ import numpy as np
 from lib.autograd import Tensor
 
 
-class Model:
+class SimpleModel:
     def __init__(self):
         self.X = None
         self.y = None
