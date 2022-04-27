@@ -56,7 +56,7 @@ def test_conv2D():
     print("forwarded", tf.keras.backend.get_value(tf_forwarded).shape)
 
     with Graph() as g:
-        z = Conv2D(X, weights)
+        z = Conv2D(Tensor(X), Tensor(weights))
         path, vis = g.compute_path(z.obj_id)
         executor = Execution(path)
         executor.forward()
