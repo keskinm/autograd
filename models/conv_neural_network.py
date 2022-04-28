@@ -37,7 +37,7 @@ class ConvNeuralNetwork:
     def make_dataset_for_classification(self):
         digits = datasets.load_digits()
 
-    def draft(self, epochs=200):
+    def train_stochastic(self, epochs=200):
         self.make_dataset_for_regression()
 
         for epoch in range(epochs):
@@ -47,7 +47,6 @@ class ConvNeuralNetwork:
                     y = Tensor(y_sample, name='y')
                     W1 = Tensor(self.W1, name='W1')
                     W2 = Tensor(self.W2, name='W2')
-
                     W_xy_pred = Tensor(self.W_xy_pred, name='W_xy_pred')
 
                     z1 = BatchLessConv2D(X, W1, compute_grad=[W1.id])
@@ -57,11 +56,16 @@ class ConvNeuralNetwork:
                     xy_pred = Dot(W_xy_pred, z3)
                     loss = Sum((xy_pred + (-y)) ** Constant(2))
 
-                    path, vis = g.compute_path(xy_pred.obj_id)
+                    path, vis = g.compute_path(loss.obj_id)
                     executor = Execution(path)
                     executor.forward()
-                    print("z1", z1().shape, "z2", z2().shape, "z3", z3().shape, "?", xy_pred().shape, "loss", loss())
+                    print("z1", z1().shape, "z2", z2().shape, "z3", z3().shape,
+                          "xy_pred", xy_pred(), "xy_real", y(), "loss", loss())
                     executor.backward_ad()
+                    self.W1 = self.W1 - 0.001 * W1.grad
+                    self.W2 = self.W2 - 0.001 * W2.grad
+                    self.W_xy_pred = self.W_xy_pred - 0.001 * W_xy_pred.grad
+
 
     def duplicate_paths_draft(self, epochs=200):
         self.make_dataset_for_regression()
@@ -88,10 +92,12 @@ class ConvNeuralNetwork:
                     y_pred = Dot(z32, W_y_pred, compute_grad=[W_y_pred.id])
                     xy_pred = Stack([x_pred, y_pred])
 
-                    path, vis = g.compute_path(xy_pred.obj_id)
+                    loss = Sum((xy_pred + (-y)) ** Constant(2))
+
+                    path, vis = g.compute_path(loss.obj_id)
                     executor = Execution(path)
                     executor.forward()
-                    print("xy_pred", xy_pred().shape)
+                    print("loss", loss())
                     executor.backward_ad()
 
-ConvNeuralNetwork().draft()
+ConvNeuralNetwork().train_stochastic()
