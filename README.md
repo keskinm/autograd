@@ -1,4 +1,4 @@
-## An implementation of Automatic differentiation library. 
+## An implementation of Automatic differentiation. 
 
 Classical methods for computing derivatives includes: 
 
