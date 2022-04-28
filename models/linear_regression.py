@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn import datasets
 
-from lib.autograd import Graph, Constant, Execution
+from lib.autograd import Graph, Constant, Execution, Tensor
 from lib.operation import Dot, Sum
 from models import SimpleModel
 
@@ -28,6 +28,22 @@ class LinearRegression(SimpleModel):
                 executor.backward_ad()
                 self.W = self.W - 0.001*W.grad
 
+    def stochastic_train_sample(self, epochs=200):
+        for epoch in range(epochs):
+            for X_sample, y_sample in list(zip(self.X, self.y)):
+                with Graph() as g:
+                    W = Tensor(self.W, name='W')
+                    X = Tensor(X_sample, name='X_sample')
+                    y = Tensor(y_sample, name='y_sample')
+                    z = (Dot(X, W, compute_grad=[W.id]) + (-y)) ** Constant(2)
+                    path, vis = g.compute_path(z.obj_id)
+                    executor = Execution(path)
+                    executor.forward()
+                    self.loss = z()
+                    print(f"Loss: {self.loss}")
+                    executor.backward_ad()
+                    self.W = self.W - 0.001 * W.grad
+
     def forward(self, W, X, g, y):
         z = Sum((Dot(X, W, compute_grad=[W.id]) + (-y)) ** Constant(2))
         path, vis = g.compute_path(z.obj_id)
@@ -35,3 +51,5 @@ class LinearRegression(SimpleModel):
         executor.forward()
         self.loss = z()
         return executor
+
+LinearRegression().stochastic_train_sample()
