@@ -5,11 +5,14 @@ from sklearn import datasets
 
 from lib.autograd import Graph, Constant, Execution, Tensor, PlaceHolder
 from lib.operation import Dot, Sum, Flatten, BatchLessConv2D, Stack
+from lib.optimizer import SGD
 
 
 class ConvNeuralNetwork:
     def __init__(self):
         self.W = {}
+
+        self.optimizer = SGD()
         self.losses = []
 
     def make_dataset_for_regression(self, n_samples=10, height=6, width=6):
@@ -38,14 +41,17 @@ class ConvNeuralNetwork:
             self.W["x_pred"] = Tensor(np.random.normal(0, size=flattened_size), name='x_pred')
             self.W["y_pred"] = Tensor(np.random.normal(0, size=flattened_size), name='y_pred')
             self.W["xy_pred"] = Tensor(np.random.normal(0, size=[2, flattened_size]), name='xy_pred')
+            self.optimizer.add_weights([self.W["1"],
+                                        self.W["2"]])
         return g, X, xy_target
 
     def make_dataset_for_classification(self):
-        digits = datasets.load_digits()
+        datasets.load_digits()
+        raise NotImplementedError
 
     def train_stochastic(self, epochs=200):
         graph, X, xy_target = self.make_dataset_for_regression()
-
+        self.optimizer.add_weights([self.W["xy_pred"]])
         with graph:
             z1 = BatchLessConv2D(X, self.W["1"], compute_grad=[self.W["1"].id])
             z2 = BatchLessConv2D(z1, self.W["2"], compute_grad=[self.W["2"].id])
@@ -75,15 +81,13 @@ class ConvNeuralNetwork:
                     )
                     epoch_loss.append(loss())
                     executor.backward_ad()
-                    self.W["1"].value -= 0.001 * self.W["1"].grad
-                    self.W["2"].value -= 0.001 * self.W["2"].grad
-                    self.W["xy_pred"].value -= 0.001 * self.W["xy_pred"].grad
+                    self.optimizer.step()
 
             self.losses.append(sum(epoch_loss) / len(epoch_loss))
 
     def stochastic_duplicate_paths_draft(self, epochs=200):
         g, X, xy_target = self.make_dataset_for_regression()
-
+        self.optimizer.add_weights([self.W["x_pred"], self.W["y_pred"],])
         with g:
             z11 = BatchLessConv2D(X, self.W["1"], compute_grad=[self.W["1"].id])
             z21 = BatchLessConv2D(z11, self.W["2"], compute_grad=[self.W["2"].id])
@@ -106,11 +110,4 @@ class ConvNeuralNetwork:
                 executor.forward()
                 print("xy_pred", xy_pred(), "xy_real", xy_target_sample(), "loss", loss())
                 executor.backward_ad()
-                self.W["1"].value -= 0.001 * self.W["1"].grad
-                self.W["2"].value -= 0.001 * self.W["2"].grad
-                self.W["x_pred"].value -= 0.001 * self.W["x_pred"].grad
-                self.W["y_pred"].value -= 0.001 * self.W["y_pred"].grad
-
-
-ConvNeuralNetwork().train_stochastic()
-
+                self.optimizer.step()

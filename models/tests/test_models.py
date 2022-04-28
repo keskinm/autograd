@@ -6,7 +6,7 @@ from models.linear_regression import LinearRegression
 from models.logistic_regression import LogisticRegression
 
 
-def test_linear_regression():
+def test_train_linear_regression():
     """Tests loss after train is lesser than 20% of original loss."""
     lr = LinearRegression()
     with Graph() as g:
@@ -17,7 +17,7 @@ def test_linear_regression():
     assert lr.loss <= loss * 0.20
 
 
-def test_logistic_regression():
+def test_train_logistic_regression():
     """Tests loss after train is lesser than 60% of original loss.
     Or equals NaN sometimes (to check why).
     """
@@ -29,12 +29,11 @@ def test_logistic_regression():
     assert np.isnan(lr.loss) or (lr.loss <= loss * 0.60)
 
 
-def test_conv_neural_network():
+def test_train_conv_neural_network():
     """Tests loss after train is lesser than 35% of the original loss."""
     from matplotlib import pyplot as plt
 
     nn = ConvNeuralNetwork()
-    nn.make_dataset_for_regression()
 
     nn.train_stochastic(epochs=350)
 
