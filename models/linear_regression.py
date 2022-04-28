@@ -51,5 +51,3 @@ class LinearRegression(SimpleModel):
         executor.forward()
         self.loss = z()
         return executor
-
-LinearRegression().stochastic_train_sample()

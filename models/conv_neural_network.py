@@ -14,6 +14,7 @@ class ConvNeuralNetwork:
         self.y = None
         self.W = None
         self.loss = None
+        self.losses = []
 
     def make_dataset_for_regression(self, n_samples=10, height=6, width=6):
         X, y = [], []
@@ -43,29 +44,31 @@ class ConvNeuralNetwork:
         for epoch in range(epochs):
             for X_sample, y_sample in list(zip(self.X, self.y)):
                 with Graph() as g:
-                    X = Tensor(X_sample, name='X')
-                    y = Tensor(y_sample, name='y')
-                    W1 = Tensor(self.W1, name='W1')
-                    W2 = Tensor(self.W2, name='W2')
-                    W_xy_pred = Tensor(self.W_xy_pred, name='W_xy_pred')
-
-                    z1 = BatchLessConv2D(X, W1, compute_grad=[W1.id])
-                    z2 = BatchLessConv2D(z1, W2, compute_grad=[W2.id])
-                    z3 = Flatten(z2)
-
-                    xy_pred = Dot(W_xy_pred, z3)
-                    loss = Sum((xy_pred + (-y)) ** Constant(2))
-
-                    path, vis = g.compute_path(loss.obj_id)
-                    executor = Execution(path)
-                    executor.forward()
-                    print("z1", z1().shape, "z2", z2().shape, "z3", z3().shape,
-                          "xy_pred", xy_pred(), "xy_real", y(), "loss", loss())
+                    W1, W2, W_xy_pred, executor = self.forward_stochastic(X_sample, g, y_sample)
                     executor.backward_ad()
                     self.W1 = self.W1 - 0.001 * W1.grad
                     self.W2 = self.W2 - 0.001 * W2.grad
                     self.W_xy_pred = self.W_xy_pred - 0.001 * W_xy_pred.grad
 
+    def forward_stochastic(self, X_sample, g, y_sample):
+        X = Tensor(X_sample, name='X')
+        y = Tensor(y_sample, name='y')
+        W1 = Tensor(self.W1, name='W1')
+        W2 = Tensor(self.W2, name='W2')
+        W_xy_pred = Tensor(self.W_xy_pred, name='W_xy_pred')
+        z1 = BatchLessConv2D(X, W1, compute_grad=[W1.id])
+        z2 = BatchLessConv2D(z1, W2, compute_grad=[W2.id])
+        z3 = Flatten(z2)
+        xy_pred = Dot(W_xy_pred, z3)
+        loss = Sum((xy_pred + (-y)) ** Constant(2))
+        path, vis = g.compute_path(loss.obj_id)
+        executor = Execution(path)
+        executor.forward()
+        print("z1", z1().shape, "z2", z2().shape, "z3", z3().shape,
+              "xy_pred", xy_pred(), "xy_real", y(), "loss", loss())
+        self.loss = loss()
+        self.losses.append(self.loss)
+        return W1, W2, W_xy_pred, executor
 
     def stochastic_duplicate_paths_draft(self, epochs=200):
         self.make_dataset_for_regression()
