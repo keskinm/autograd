@@ -13,7 +13,7 @@ class ConvNeuralNetwork:
         self.X = None
         self.y = None
         self.W = {}
-        self.loss = None
+
         self.losses = []
 
     def make_dataset_for_regression(self, n_samples=10, height=6, width=6):
@@ -42,13 +42,16 @@ class ConvNeuralNetwork:
         self.make_dataset_for_regression()
 
         for epoch in range(epochs):
+            epoch_loss = []
             for X_sample, y_sample in list(zip(self.X, self.y)):
                 with Graph() as g:
-                    W1, W2, W_xy_pred, executor = self.forward_stochastic(X_sample, g, y_sample)
+                    W1, W2, W_xy_pred, executor, loss = self.forward_stochastic(X_sample, g, y_sample)
+                    epoch_loss.append(loss)
                     executor.backward_ad()
                     self.W['1'] -= 0.001 * W1.grad
                     self.W['2'] -= 0.001 * W2.grad
                     self.W['xy_pred'] -= 0.001 * W_xy_pred.grad
+            self.losses.append(sum(epoch_loss)/len(epoch_loss))
 
     def forward_stochastic(self, X_sample, g, y_sample):
         X = Tensor(X_sample, name='X')
@@ -66,9 +69,7 @@ class ConvNeuralNetwork:
         executor.forward()
         print("z1", z1().shape, "z2", z2().shape, "z3", z3().shape,
               "xy_pred", xy_pred(), "xy_real", y(), "loss", loss())
-        self.loss = loss()
-        self.losses.append(self.loss)
-        return W1, W2, W_xy_pred, executor
+        return W1, W2, W_xy_pred, executor, loss()
 
     def stochastic_duplicate_paths_draft(self, epochs=200):
         self.make_dataset_for_regression()
