@@ -13,13 +13,15 @@ class LogisticRegression(SimpleModel):
         self.init_weights()
 
     def make_dataset(self, plot_dataset=False):
-        self.X = np.array([[0.05*x, 0] for x in range(5)] + [[1-0.05*x, 1] for x in range(5)])
+        self.X = np.array(
+            [[0.05 * x, 0] for x in range(5)] + [[1 - 0.05 * x, 1] for x in range(5)]
+        )
         self.y = np.array([0 for _ in range(5)] + [1 for _ in range(5)])
         if plot_dataset:
             plt.scatter(self.X[:, 0], self.X[:, 1], c=self.y)
-            plt.savefig('plot_dataset.png')
+            plt.savefig("plot_dataset.png")
 
-    def train_sample(self, forward_style='merge_forward_pass', epochs=200):
+    def train_sample(self, forward_style="merge_forward_pass", epochs=200):
         self.make_dataset()
         for epoch in range(epochs):
             with Graph() as g:
@@ -37,7 +39,7 @@ class LogisticRegression(SimpleModel):
         loss_left = y * first_logged
         neg_loss_left = -loss_left
         second_logged = Log(-z2 + Constant(1))
-        loss_right = (-y + Constant(1, name='fourth const')) * second_logged
+        loss_right = (-y + Constant(1, name="fourth const")) * second_logged
         loss_total = neg_loss_left + loss_right
         loss = Sum(loss_total)
         path, vis = g.compute_path(loss.obj_id)
@@ -47,25 +49,25 @@ class LogisticRegression(SimpleModel):
 
     def merge_forward_pass(self, W, X, g, y):
         dotted = Dot(X, W, compute_grad=[W.id])
-        dotted.name = 'dotted'
+        dotted.name = "dotted"
         neg_dotted = -dotted
-        neg_dotted.name = 'neg dotted'
-        exped = Exp(neg_dotted + Constant(1, name='first const'))
-        exped.name = 'exped'
-        z = Divide(Constant(1, name='second const'), exped)
-        z.name = 'z'
-        first_logged = Log(z, name='first logged')
+        neg_dotted.name = "neg dotted"
+        exped = Exp(neg_dotted + Constant(1, name="first const"))
+        exped.name = "exped"
+        z = Divide(Constant(1, name="second const"), exped)
+        z.name = "z"
+        first_logged = Log(z, name="first logged")
         loss_left = y * first_logged
-        loss_left.name = 'loss_left'
+        loss_left.name = "loss_left"
         neg_loss_left = -loss_left
-        neg_loss_left.name = 'neg_loss_left'
-        second_logged = Log(-z + Constant(1, name='third const'), name='second logged')
-        loss_right = (-y + Constant(1, name='fourth const')) * second_logged
-        loss_right.name = 'loss_right'
+        neg_loss_left.name = "neg_loss_left"
+        second_logged = Log(-z + Constant(1, name="third const"), name="second logged")
+        loss_right = (-y + Constant(1, name="fourth const")) * second_logged
+        loss_right.name = "loss_right"
         loss_total = neg_loss_left + loss_right
-        loss_total.name = 'loss_total'
+        loss_total.name = "loss_total"
         loss = Sum(loss_total)
-        loss.name = 'loss'
+        loss.name = "loss"
         z_path, z_vis = g.compute_path(z.obj_id)
         path, vis = g.compute_path(loss.obj_id, z_path, z_vis)
         executor = Execution(path)

@@ -26,15 +26,15 @@ class LinearRegression(SimpleModel):
                 executor = self.forward(W, X, g, y)
                 print(f"Loss: {self.loss}")
                 executor.backward_ad()
-                self.W = self.W - 0.001*W.grad
+                self.W = self.W - 0.001 * W.grad
 
     def stochastic_train_sample(self, epochs=200):
         for epoch in range(epochs):
             for X_sample, y_sample in list(zip(self.X, self.y)):
                 with Graph() as g:
-                    W = Tensor(self.W, name='W')
-                    X = Tensor(X_sample, name='X_sample')
-                    y = Tensor(y_sample, name='y_sample')
+                    W = Tensor(self.W, name="W")
+                    X = Tensor(X_sample, name="X_sample")
+                    y = Tensor(y_sample, name="y_sample")
                     z = (Dot(X, W, compute_grad=[W.id]) + (-y)) ** Constant(2)
                     path, vis = g.compute_path(z.obj_id)
                     executor = Execution(path)

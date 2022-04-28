@@ -5,8 +5,9 @@ from lib.abilities import WithGrad
 from lib.active_graph import active_graph
 
 import sys
+
 if sys.version_info[0:3] != (3, 6, 9):
-    raise Exception('Requires python 3.6.9')
+    raise Exception("Requires python 3.6.9")
 
 
 class Execution:
@@ -21,10 +22,10 @@ class Execution:
     def backward_ad(self):
         """Backward automatic differentiation implementation."""
         vis = set()
-        self.path[0].init_grad('ones_like')
+        self.path[0].init_grad("ones_like")
         for obj in self.path[1:]:
             if isinstance(obj, WithGrad):
-                obj.init_grad('zeros_like')
+                obj.init_grad("zeros_like")
 
         for obj in self.path:
             if isinstance(obj, Tensor):
@@ -42,6 +43,7 @@ class Execution:
 
     def forward_ad(self):
         """Forward automatic differentiation implementation."""
+
 
 class Graph:
     def __init__(self):
@@ -61,6 +63,7 @@ class Graph:
 
     def compute_path(self, operation_id, to_merge=None, to_merge_vis=None):
         from lib.operation import Operation
+
         n = []
         r = to_merge or []
         vis = to_merge_vis or set()
@@ -77,10 +80,11 @@ class Graph:
                 if not (inp.obj_id in vis):
                     n.append(inp)
                     vis.add(inp.obj_id)
-                if isinstance(inp, Operation): rec_compute_path(inp)
+                if isinstance(inp, Operation):
+                    rec_compute_path(inp)
 
         rec_compute_path(operation)
-        return n+r, vis
+        return n + r, vis
 
 
 class InGraphObject:
@@ -106,32 +110,39 @@ class InGraphObject:
 
     def __matmul__(self, other):
         from lib.operation import MatMul
+
         other = self.check_other(other)
         return MatMul(self, other)
 
     def __mul__(self, other):
         from lib.operation import Mul
+
         other = self.check_other(other)
         return Mul(self, other)
 
     def __pow__(self, other):
         from lib.operation import Power
+
         other = self.check_other(other)
         return Power(self, other)
 
     def __div__(self, other):
         from lib.operation import Divide
+
         other = self.check_other(other)
         return Divide(self, other)
 
     def __neg__(self):
         from lib.operation import Mul
+
         return Mul(self, Constant(value=-1))
 
     def __add__(self, other):
         from lib.operation import Add
+
         other = self.check_other(other)
         return Add(self, other)
+
 
 class Tensor(InGraphObject, WithGrad):
     def __init__(self, value, name=None):
@@ -142,6 +153,7 @@ class Tensor(InGraphObject, WithGrad):
 
     def __call__(self, *args, **kwargs):
         return self._value
+
 
 class Constant(Tensor):
     def __init__(self, value, name=None):
@@ -154,5 +166,3 @@ class Constant(Tensor):
     @value.setter
     def value(self, new_value):
         raise ValueError("Cannot reassign constant")
-
-

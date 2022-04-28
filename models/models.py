@@ -14,7 +14,7 @@ class SimpleModel:
         self.W = weights or np.random.normal(0, size=self.X.shape[1])
 
     def init_tensors(self):
-        X = Tensor(self.X, name='X')
-        y = Tensor(self.y, name='y')
-        W = Tensor(self.W, name='W')
+        X = Tensor(self.X, name="X")
+        y = Tensor(self.y, name="y")
+        W = Tensor(self.W, name="W")
         return W, X, y

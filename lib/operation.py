@@ -57,7 +57,7 @@ class Operation(InGraphObject, WithGrad):
 
 
 class Add(Operation):
-    def __init__(self, a, b, name='add'):
+    def __init__(self, a, b, name="add"):
         Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
@@ -71,7 +71,7 @@ class Add(Operation):
 
 
 class Power(Operation):
-    def __init__(self, a, b, name='power'):
+    def __init__(self, a, b, name="power"):
         Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
@@ -83,13 +83,13 @@ class Power(Operation):
     def backward(self, dout):
         a = self.a()
         b = self.b()
-        l = dout*b*np.power(a, (b-1))
-        r = dout*np.log(a)*np.power(a, b)
+        l = dout * b * np.power(a, (b - 1))
+        r = dout * np.log(a) * np.power(a, b)
         return l, r
 
 
 class Exp(Operation):
-    def __init__(self, a, name='exp'):
+    def __init__(self, a, name="exp"):
         Operation.__init__(self, compute_grads=[a.id], name=name)
         self.a = a
         self.add_inputs([self.a])
@@ -103,21 +103,21 @@ class Exp(Operation):
 
 
 class Log(Operation):
-    def __init__(self, a, base=10, name='log'):
+    def __init__(self, a, base=10, name="log"):
         Operation.__init__(self, compute_grads=[a.id], name=name)
         self.a = a
         self.base = base
         self.add_inputs([self.a])
 
     def forward(self):
-        return getattr(np, f'log{self.base}')(self.a())
+        return getattr(np, f"log{self.base}")(self.a())
 
     def backward(self, dout):
         return [dout / self.a()]
 
 
 class Divide(Operation):
-    def __init__(self, a, b, name='divide'):
+    def __init__(self, a, b, name="divide"):
         Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
@@ -130,11 +130,11 @@ class Divide(Operation):
         a = self.a()
         b = self.b()
 
-        return dout/b, dout*a/np.power(b, 2)
+        return dout / b, dout * a / np.power(b, 2)
 
 
 class Mul(Operation):
-    def __init__(self, a, b, name='mul'):
+    def __init__(self, a, b, name="mul"):
         Operation.__init__(self, compute_grads=[a.id, b.id], name=name)
         self.a = a
         self.b = b
@@ -143,7 +143,7 @@ class Mul(Operation):
     def forward(self):
         a = self.a()
         b = self.b()
-        res =  a * b
+        res = a * b
         return res
 
     def backward(self, dout):
@@ -151,7 +151,7 @@ class Mul(Operation):
 
 
 class MatMul(Operation):
-    def __init__(self, a, b, compute_grad=None, name='matmul'):
+    def __init__(self, a, b, compute_grad=None, name="matmul"):
         compute_grad = compute_grad or [a.id, b.id]
         Operation.__init__(self, compute_grads=compute_grad, name=name)
         self.a = a
@@ -159,7 +159,7 @@ class MatMul(Operation):
         self.add_inputs([self.a, self.b])
 
     def forward(self):
-        res =  self.a() @ self.b()
+        res = self.a() @ self.b()
         return res
 
     def backward(self, dout):
@@ -176,7 +176,7 @@ class MatMul(Operation):
 
 
 class Dot(Operation):
-    def __init__(self, x, w, compute_grad=None, name='Dot'):
+    def __init__(self, x, w, compute_grad=None, name="Dot"):
         compute_grad = compute_grad or [x.id, w.id]
         Operation.__init__(self, compute_grads=compute_grad, name=name)
         self.X = x
@@ -184,14 +184,14 @@ class Dot(Operation):
         self.add_inputs([self.X, self.W])
 
     def forward(self):
-        res =  np.dot(self.X(), self.W())
+        res = np.dot(self.X(), self.W())
         return res
 
     def backward(self, dout):
         grads = []
 
         if self.X.id in self.compute_grads:
-            #@todo Do the reshape outside.
+            # @todo Do the reshape outside.
             _dout = np.expand_dims(dout, -1) if dout.ndim == 1 else dout
             _W = np.expand_dims(self.W(), -1) if self.W().ndim == 1 else self.W()
 
@@ -206,7 +206,7 @@ class Dot(Operation):
 
 
 class Sum(Operation):
-    def __init__(self, t, name='Sum'):
+    def __init__(self, t, name="Sum"):
         Operation.__init__(self, compute_grads=[t.id], name=name)
         self.t = t
         self.add_inputs([self.t])
@@ -219,7 +219,7 @@ class Sum(Operation):
 
 
 class Conv2D(Operation):
-    def __init__(self, x, w, compute_grad=None, name='conv2D'):
+    def __init__(self, x, w, compute_grad=None, name="conv2D"):
         compute_grad = compute_grad or [x.id, w.id]
         Operation.__init__(self, compute_grads=compute_grad, name=name)
         self.x = x
@@ -240,17 +240,22 @@ class Conv2D(Operation):
 
             convolved_to_reshape = []
 
-            for left_corner in range(x_dim_0-w_dim_0+1):
-                for top_corner in range(x_dim_1-w_dim_1+1):
+            for left_corner in range(x_dim_0 - w_dim_0 + 1):
+                for top_corner in range(x_dim_1 - w_dim_1 + 1):
                     mult = 0
 
                     for x in range(w_dim_0):
                         for y in range(w_dim_1):
-                            mult += self.w()[x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
+                            mult += (
+                                self.w()[x, y]
+                                * self.x()[sample_idx, left_corner + x, top_corner + y]
+                            )
 
                     convolved_to_reshape.append(mult)
 
-            convolved = np.array(convolved_to_reshape).reshape(x_dim_0-w_dim_0+1, x_dim_1-w_dim_1+1)
+            convolved = np.array(convolved_to_reshape).reshape(
+                x_dim_0 - w_dim_0 + 1, x_dim_1 - w_dim_1 + 1
+            )
 
             samples_convolved.append(convolved)
 
@@ -276,7 +281,12 @@ class Conv2D(Operation):
                     for sample_idx in range(n_samples):
                         for left_corner in range(x_dim_0 - w_dim_0 + 1):
                             for top_corner in range(x_dim_1 - w_dim_1 + 1):
-                               contrib +=  dout[sample_idx, x, y] * self.x()[sample_idx, left_corner+x, top_corner+y]
+                                contrib += (
+                                    dout[sample_idx, x, y]
+                                    * self.x()[
+                                        sample_idx, left_corner + x, top_corner + y
+                                    ]
+                                )
 
                     line_derivatives.append(contrib)
 
@@ -286,8 +296,9 @@ class Conv2D(Operation):
 
         return grads
 
+
 class BatchLessConv2D(Conv2D):
-    def __init__(self, x, w, compute_grad=None, name='batch_less_conv2d'):
+    def __init__(self, x, w, compute_grad=None, name="batch_less_conv2d"):
         Conv2D.__init__(self, x=x, w=w, compute_grad=compute_grad, name=name)
 
     def forward(self):
@@ -300,17 +311,21 @@ class BatchLessConv2D(Conv2D):
 
         convolved_to_reshape = []
 
-        for left_corner in range(x_dim_0-w_dim_0+1):
-            for top_corner in range(x_dim_1-w_dim_1+1):
+        for left_corner in range(x_dim_0 - w_dim_0 + 1):
+            for top_corner in range(x_dim_1 - w_dim_1 + 1):
                 mult = 0
 
                 for x in range(w_dim_0):
                     for y in range(w_dim_1):
-                        mult += self.w()[x, y] * self.x()[left_corner+x, top_corner+y]
+                        mult += (
+                            self.w()[x, y] * self.x()[left_corner + x, top_corner + y]
+                        )
 
                 convolved_to_reshape.append(mult)
 
-        convolved = np.array(convolved_to_reshape).reshape(x_dim_0-w_dim_0+1, x_dim_1-w_dim_1+1)
+        convolved = np.array(convolved_to_reshape).reshape(
+            x_dim_0 - w_dim_0 + 1, x_dim_1 - w_dim_1 + 1
+        )
 
         return convolved
 
@@ -333,7 +348,9 @@ class BatchLessConv2D(Conv2D):
 
                     for left_corner in range(x_dim_0 - w_dim_0 + 1):
                         for top_corner in range(x_dim_1 - w_dim_1 + 1):
-                           contrib +=  dout[x, y] * self.x()[left_corner+x, top_corner+y]
+                            contrib += (
+                                dout[x, y] * self.x()[left_corner + x, top_corner + y]
+                            )
 
                     line_derivatives.append(contrib)
 
@@ -346,7 +363,7 @@ class BatchLessConv2D(Conv2D):
 
 class Transpose(Operation):
     def __init__(self, tensor, transposition):
-        Operation.__init__(self, name='transpose')
+        Operation.__init__(self, name="transpose")
         self.t = tensor
         self.transposition = transposition
         self.add_inputs([self.t])
@@ -359,7 +376,7 @@ class Transpose(Operation):
 
 
 class Flatten(Operation):
-    def __init__(self, tensor, name='flatten'):
+    def __init__(self, tensor, name="flatten"):
         Operation.__init__(self, name=name)
         self.t = tensor
         self.add_inputs([self.t])
@@ -375,7 +392,7 @@ class Flatten(Operation):
 
 
 class Stack(Operation):
-    def __init__(self, tensors, axis=0, name='stack'):
+    def __init__(self, tensors, axis=0, name="stack"):
         Operation.__init__(self, name=name)
         self.tensors = tensors
         self.add_inputs(self.tensors)
@@ -390,7 +407,7 @@ class Stack(Operation):
 
 
 class Reshape(Operation):
-    def __init__(self, tensor, shape, name='reshape'):
+    def __init__(self, tensor, shape, name="reshape"):
         Operation.__init__(self, name=name)
         self.t = tensor
         self.shape = shape
