@@ -28,7 +28,7 @@ class Execution:
                 obj.init_grad("zeros_like")
 
         for obj in self.path:
-            if isinstance(obj, Tensor):
+            if isinstance(obj, (Tensor, PlaceHolder)):
                 continue
 
             grads = obj.backward(obj.grad)
@@ -49,6 +49,7 @@ class Graph:
     def __init__(self):
         self.tensors = {}
         self.ops = {}
+        self.placeholders = {}
 
     def __enter__(self):
         active_graph.append(self)
@@ -151,6 +152,14 @@ class Tensor(InGraphObject, WithGrad):
         active_graph[-1].tensors[self.obj_id] = self
         self._value = value
 
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
+
     def __call__(self, *args, **kwargs):
         return self._value
 
@@ -166,3 +175,28 @@ class Constant(Tensor):
     @value.setter
     def value(self, new_value):
         raise ValueError("Cannot reassign constant")
+
+
+class PlaceHolder(InGraphObject):
+    def __init__(self, value, name=None):
+        InGraphObject.__init__(self, name=name)
+        active_graph[-1].placeholders[self.obj_id] = self
+        self._value = value
+        self.idx = 0
+
+    @property
+    def value(self):
+        return self._value
+
+    def __call__(self, *args, **kwargs):
+        return self._value[self.idx]
+
+    def __next__(self):
+        if self.idx == len(self._value) - 1:
+            raise StopIteration
+        self.idx += 1
+        return self
+
+    def __iter__(self):
+        self.idx = 0
+        return self

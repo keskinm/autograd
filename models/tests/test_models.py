@@ -30,15 +30,15 @@ def test_logistic_regression():
 
 
 def test_conv_neural_network():
-    """Tests loss after train is lesser than 30% of the original loss."""
+    """Tests loss after train is lesser than 35% of the original loss."""
     from matplotlib import pyplot as plt
 
     nn = ConvNeuralNetwork()
     nn.make_dataset_for_regression()
 
-    nn.train_stochastic(epochs=300)
+    nn.train_stochastic(epochs=350)
 
     plt.plot(nn.losses)
     plt.savefig("losses.png")
 
-    assert nn.losses[-1] <= nn.losses[0] * 0.30
+    assert nn.losses[-1] <= nn.losses[0] * 0.35
