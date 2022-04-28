@@ -191,7 +191,11 @@ class Dot(Operation):
         grads = []
 
         if self.X.id in self.compute_grads:
-            x_grad = np.dot(dout, self.W().T)
+            #@todo Do the reshape outside.
+            _dout = np.expand_dims(dout, -1) if dout.ndim == 1 else dout
+            _W = np.expand_dims(self.W(), -1) if self.W().ndim == 1 else self.W()
+
+            x_grad = np.dot(_dout, _W.T)
             grads.append(x_grad)
 
         if self.W.id in self.compute_grads:
@@ -282,6 +286,63 @@ class Conv2D(Operation):
 
         return grads
 
+class BatchLessConv2D(Conv2D):
+    def __init__(self, x, w, compute_grad=None, name='batch_less_conv2d'):
+        Conv2D.__init__(self, x=x, w=w, compute_grad=compute_grad, name=name)
+
+    def forward(self):
+        """
+        self.w of shape (height, witdh) convolves self.X of shape (height, width)
+        :return: (height, width) convolution
+        """
+        x_dim_0, x_dim_1 = self.x().shape
+        w_dim_0, w_dim_1 = self.w().shape
+
+        convolved_to_reshape = []
+
+        for left_corner in range(x_dim_0-w_dim_0+1):
+            for top_corner in range(x_dim_1-w_dim_1+1):
+                mult = 0
+
+                for x in range(w_dim_0):
+                    for y in range(w_dim_1):
+                        mult += self.w()[x, y] * self.x()[left_corner+x, top_corner+y]
+
+                convolved_to_reshape.append(mult)
+
+        convolved = np.array(convolved_to_reshape).reshape(x_dim_0-w_dim_0+1, x_dim_1-w_dim_1+1)
+
+        return convolved
+
+    def backward(self, dout):
+        grads = []
+
+        if self.x.id in self.compute_grads:
+            raise NotImplementedError
+
+        if self.w.id in self.compute_grads:
+            x_dim_0, x_dim_1 = self.x().shape
+            w_dim_0, w_dim_1 = self.w().shape
+
+            w_grad = []
+
+            for x in range(w_dim_0):
+                line_derivatives = []
+                for y in range(w_dim_1):
+                    contrib = 0
+
+                    for left_corner in range(x_dim_0 - w_dim_0 + 1):
+                        for top_corner in range(x_dim_1 - w_dim_1 + 1):
+                           contrib +=  dout[x, y] * self.x()[left_corner+x, top_corner+y]
+
+                    line_derivatives.append(contrib)
+
+                w_grad.append(line_derivatives)
+
+            grads.append(np.array(w_grad))
+
+        return grads
+
 
 class Transpose(Operation):
     def __init__(self, tensor, transposition):
@@ -313,8 +374,22 @@ class Flatten(Operation):
         return [dout.reshape(self.saved_shape)]
 
 
+class Stack(Operation):
+    def __init__(self, tensors, axis=0, name='stack'):
+        Operation.__init__(self, name=name)
+        self.tensors = tensors
+        self.add_inputs(self.tensors)
+        self.axis = axis
+
+    def forward(self):
+        return np.stack(self.tensors, axis=self.axis)
+
+    def backward(self, dout):
+        return [x for x in dout]
+
+
 class Reshape(Operation):
-    def __init__(self, tensor, shape, name='flatten'):
+    def __init__(self, tensor, shape, name='reshape'):
         Operation.__init__(self, name=name)
         self.t = tensor
         self.shape = shape

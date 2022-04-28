@@ -8,7 +8,7 @@ class WithValue:
 class WithGrad(WithValue):
     def __init__(self, value=None):
         """Object which holds gradient."""
-        WithValue(self).__init__(value=value)
+        WithValue.__init__(self, value=value)
         self.grad = None
 
     def init_grad(self, np_init):
