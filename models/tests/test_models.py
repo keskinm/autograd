@@ -24,7 +24,7 @@ def test_logistic_regression():
     assert lr.loss <= loss*0.30
 
 def test_conv_neural_network():
-    """Tests loss after train is lesser than 40% of the original loss."""
+    """Tests loss after train is lesser than 10% of the original loss."""
     from matplotlib import pyplot as plt
 
     nn = ConvNeuralNetwork()
