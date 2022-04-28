@@ -382,7 +382,8 @@ class Stack(Operation):
         self.axis = axis
 
     def forward(self):
-        return np.stack(self.tensors, axis=self.axis)
+        tensors = [t() for t in self.tensors]
+        return np.stack(tensors, axis=self.axis)
 
     def backward(self, dout):
         return [x for x in dout]

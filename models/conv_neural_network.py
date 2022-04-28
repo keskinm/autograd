@@ -67,7 +67,7 @@ class ConvNeuralNetwork:
                     self.W_xy_pred = self.W_xy_pred - 0.001 * W_xy_pred.grad
 
 
-    def duplicate_paths_draft(self, epochs=200):
+    def stochastic_duplicate_paths_draft(self, epochs=200):
         self.make_dataset_for_regression()
 
         for epoch in range(epochs):
@@ -91,13 +91,15 @@ class ConvNeuralNetwork:
                     x_pred = Dot(z31, W_x_pred, compute_grad=[W_x_pred.id])
                     y_pred = Dot(z32, W_y_pred, compute_grad=[W_y_pred.id])
                     xy_pred = Stack([x_pred, y_pred])
-
-                    loss = Sum((xy_pred + (-y)) ** Constant(2))
+                    powered = (xy_pred + (-y)) ** Constant(2)
+                    loss = Sum(powered)
 
                     path, vis = g.compute_path(loss.obj_id)
                     executor = Execution(path)
                     executor.forward()
-                    print("loss", loss())
+                    print("xy_pred", xy_pred(), "xy_real", y(), "loss", loss())
                     executor.backward_ad()
-
-ConvNeuralNetwork().train_stochastic()
+                    self.W1 = self.W1 - 0.001 * W1.grad
+                    self.W2 = self.W2 - 0.001 * W2.grad
+                    self.W_x_pred = self.W_x_pred - 0.001 * W_x_pred.grad
+                    self.W_y_pred = self.W_y_pred - 0.001 * W_y_pred.grad
