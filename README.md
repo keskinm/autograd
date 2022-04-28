@@ -1,7 +1,6 @@
 ## An implementation of Automatic differentiation library. 
 
-Automatic differentiation is distinct from symbolic differentiation and numerical differentiation.
-
+Classical methods for computing derivatives includes: 
 
 - Symbolic differentiation faces the difficulty of converting a computer program into a single 
 mathematical expression and can lead to inefficient code. 
@@ -9,26 +8,24 @@ mathematical expression and can lead to inefficient code.
 process and cancellation. 
 
 Both of these classical methods have problems with calculating higher 
-derivatives, where complexity and errors increase. Finally, both of these classical methods are 
+derivatives, where complexity and errors increase. These classical methods are 
 slow at computing partial derivatives of a function with respect to many inputs, as is needed for 
-gradient-based optimization algorithms. Automatic differentiation solves all of these problems.
+gradient-based optimization algorithms. 
 
-It is this type of differentiation (AD) which is used in scientific computing frameworks as Torch and 
-Tensorflow. Some example of gradient descent are provided within regular machine learning models. 
 
-Here a snippet of usage: 
+Automatic differentiation is an efficient method to compute derivatives that solves these problems.
 
 ````python
 from lib.autograd import Graph, Tensor, Execution, Constant
 from lib.operation import Sum, Dot
-def train_sample(self):
-    for _ in range(200):
+def train_sample(self, epochs=200):
+    for epoch in range(epochs):
         with Graph() as g:
-            X = Tensor(self.X, name='X')
+            x = Tensor(self.X, name='X')
             y = Tensor(self.y, name='y')
-            W = Tensor(self.W, name='W')
+            weights = Tensor(self.W, name='W')
     
-            z = Sum((Dot(X, W) + (-y)) ** Constant(2))
+            z = Sum((Dot(x, weights) + (-y)) ** Constant(2))
             path, vis = g.compute_path(z.obj_id)
             executor = Execution(path)
             executor.forward()
@@ -36,5 +33,5 @@ def train_sample(self):
     
             print(f"Loss: {self.loss}")
             executor.backward_ad()
-            self.W = self.W - 0.001*W.grad
+            self.W = self.W - 0.001*weights.grad
 ````
